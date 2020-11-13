@@ -12,6 +12,7 @@ library(here)
 library(lubridate)
 library(kableExtra)
 library(effsize)
+library(broom)
 ```
 
 
@@ -144,7 +145,7 @@ weight_effect <- cohen.d(na.omit(hares_f), na.omit(hares_m)) # effect size
 
 ```
 
-The actual difference in means between juvenile snowshoe hares at the Bonanza Creek LTER is`r round(comparison_juveniles[1,2] - comparison_juveniles[2,2], digits = 4)`g. The p-value calculated using a `r weight_ttest$method` (p = `r round(weight_ttest$p.value, digits = 3)`) indicates a high liklihood that the two groups were drawn from samples with different means (ie there is a significant difference). However, with an estimated effect of `r round(weight_effect$estimate, digits = 3)` the effect size calculated using `r weight_effect$method` is `r weight_effect$magnitude`.
+The actual difference in means between juvenile snowshoe hares at the Bonanza Creek LTER is `r abs(round(comparison_juveniles[1,2] - comparison_juveniles[2,2], digits = 4))`g. The p-value calculated using a `r weight_ttest$method` (p = `r round(weight_ttest$p.value, digits = 3)`) indicates a high liklihood that the two groups were drawn from samples with different means (ie there is a significant difference). However, with an estimated effect of `r round(weight_effect$estimate, digits = 3)` the effect size calculated using `r weight_effect$method` is `r weight_effect$magnitude`.
 
 
 ### Juvenile Weight and Hind Foot Length
@@ -152,12 +153,28 @@ The actual difference in means between juvenile snowshoe hares at the Bonanza Cr
 ```{r}
 ggplot(bonanza_juvenile, aes(weight, hindft)) + # plot weight and hindft
   geom_point() + # scatterplot
+  stat_smooth(method = "lm", col = "black") +
   theme_classic() +
   labs(x = "Hind Foot Lenght (mm)",
        y = "Weight (g)",
        caption = "Figure 3. Relationship between weight (g) and hind foot lenght (mm) of juvenile snowshoe hares.") +
   theme(plot.caption = element_text(hjust = 0, size = 11)) # move and size figure caption
 ```
+
+```{r}
+lm_j_ft_weight <- lm(hindft ~ weight, data = bonanza_juvenile) # linear model
+
+ft_weight_lm_tidy <- broom::tidy(lm_j_ft_weight) # make table
+
+bonanza_int <- ft_weight_lm_tidy$estimate[1] # intercept
+
+bonanza_coef <- ft_weight_lm_tidy$estimate[2] # coefficient
+
+bonanza_lm_out <- broom::glance(lm_j_ft_weight) # stats glance
+
+```
+
+Simple linear regression was used to explore the relationship between juvinile snowshoe hare foot hind foot length (mm) and body mass (g) across all three sampling sites, and including both male and female hares. A significant regression model was found ($\beta$ = `r round(bonanza_coef,3)`, F(`r bonanza_lm_out$df`,`r bonanza_lm_out$df.residual`) = `r round(bonanza_lm_out$statistic,1)`, p < 0.001) with an R^2^ of `r round(bonanza_lm_out$r.squared,3)`.
 
 
 # Summary
