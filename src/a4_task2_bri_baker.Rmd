@@ -10,12 +10,15 @@ knitr::opts_chunk$set(echo = FALSE, message = FALSE, warning = FALSE)
 library(tidyverse)
 library(here)
 library(lubridate)
-
+library(kableExtra)
+library(effsize)
 ```
 
 
 ```{r import}
-bonanza_hares <- read_csv(here("data" , "bonanza_hares.csv"))
+bonanza_hares <- read_csv(here("data" , "bonanza_hares.csv")) #load data
+bonanza_juvenile <- bonanza_hares %>% # start with full dataset
+  filter(age == "j") # filter juveniles
 ```
 
 # Introduction
@@ -29,36 +32,132 @@ bonanza_hares <- read_csv(here("data" , "bonanza_hares.csv"))
 # Exploratory Findings
 
 
-## Annual Juvenile Trap Counts
+### Annual Juvenile Trap Counts
 
 ```{r}
-annual_juvinile <- bonanza_hares %>% 
-  filter(age == "j") %>% 
-  mutate(year_new = as.numeric(year(mdy(date)))) %>% 
-  count(year_new) %>% 
-  rename(count = n)
+annual_juvenile <- bonanza_juvenile %>% # start with juvenile hares
+  mutate(year_new = as.numeric(year(mdy(date)))) %>% # make year column as a number
+  count(year_new) %>% # summarize individuals by years
+  rename(count = n) # rename counts column
 
-ggplot(annual_juvinile, aes(year_new, count)) +
-  geom_line() +
-  scale_x_continuous("Year", breaks = seq(1999, 2012, 1)) +
-  theme_light() +
-  labs(title = "Figure 1: Annual Count of Juvinile Bonanza Hares" , 
-       y = "Individuals (count)") +
-  theme(panel.border = element_blank(), 
-        panel.grid.major = element_blank(),
-        panel.grid.minor = element_blank(), 
-        axis.line = element_line(colour = "black"))
+ggplot(annual_juvenile, aes(year_new, count)) + # make plot of year counts
+  geom_line() + # use line graph
+  scale_x_continuous("Year", breaks = seq(1999, 2012, 1)) + # format x axis
+  theme_light() + # format theme
+  labs(caption = "Figure 1. Annual Count of Juvenile Bonanza Hares" , # title
+       y = "Individuals (count)") + # y label
+  theme(panel.border = element_blank(), # remove panel border
+        panel.grid.major = element_blank(), # remove major gridlines
+        panel.grid.minor = element_blank(), # remove minor gridlines
+        axis.line = element_line(colour = "black"), # make axis black
+        plot.caption = element_text(hjust = 0, size = 11)) # move and size figure caption
 
 ```
 
 
-## Juvenile Weights
+
+Then, in 3 - 4 sentences below your figure, describe major takeaways from your graph about total snowshoe hare trappings at the site. You might consider:
+
+What were the minimum and maximum counts of juvenile hare trappings?
+Mean or median annual number of juvenile hares trapped?
+General/notable trends?
+These are absolute counts, but this count is also impacted by effort (e.g. the number of days and number of traps in the study each year). What would you suggest be done moving forward (you are not expected to actually do this) to standardize the juvenile hare population in future analyses?
 
 
-## Juvenile Weight Comparison
+
+### Juvenile Weights
+
+```{r}
+juvenile_weights <- bonanza_juvenile %>% # start with juvenile hares
+  select(weight, sex, grid) %>% # select desired variables
+  group_by(sex, grid) # group by sex and grid site
+
+ggplot(juvenile_weights, aes(sex, weight)) + # plot juvenile weights
+  geom_boxplot(aes(sex, weight)) + # boxplot
+  geom_jitter(width = 0.25) + # jitter plot
+  facet_wrap(~grid) + #split up by grid
+  labs(caption = "Figure 2. Juvenile Weight and Sex Comparision by Site", # label
+       x = "Sex",
+       y = "Weight (g)") +
+  theme(panel.border = element_blank(), # remove panel border
+        panel.grid.major = element_blank(), # remove major gridlines
+        panel.grid.minor = element_blank(), # remove minor gridlines
+        axis.line = element_line(colour = "black"), # make axis black
+        plot.caption = element_text(hjust = 0, size = 11)) # move and size figure caption
 
 
-## Juvenile Weight and Hind Foot Length
+```
+
+include finalized figure captions below your visualization(s). FIX THIS
+
+Then, in 2 - 3 sentences below your visualization(s) describe in text the main takeaways that you would want the audience to understand from your figures.
+
+
+
+### Juvenile Weight Comparison
+
+Further compare mean weights for **juvenile male and female snowshoe hares** included in this study. 
+
+A 2 - 3 sentence comprehensive statement of the means comparison, including at least:
+The actual difference in means
+Effect size (Cohen's *d*)
+Outcome of a two-sample t-test
+
+
+```{r}
+comparison_juveniles <- juvenile_weights %>% # start with juvenile weights
+  filter(sex != "na") %>% # remove na
+  group_by(sex) %>% # group by sex
+  summarize(mean_weight_g = mean(weight, na.rm = TRUE), # find mean weight
+            sd_weight_g = sd(weight, na.rm = TRUE), # find SD
+            sample_size = n()) # count sample size
+  
+kable(comparison_juveniles, "html", # make a table in html
+      caption = "Table 1. Summary Statistics for Weight Comparison",
+      col.names = c("Sex", "Mean (g)", "SD (g)", "Sample Size")) %>% # rename columns
+  kable_styling("striped") #use striped styling
+```
+
+```{r, include = FALSE}
+## histogram and qq plot to check normality before running t-test
+ggplot(juvenile_weights, aes(weight)) + # make ggplot of weight
+  geom_histogram(binwidth = 55) + # use histogram
+  facet_wrap(~sex) # split by sex
+
+ggplot(juvenile_weights, aes(sample = weight)) + # make ggplot of weight
+  geom_qq() + # use QQ
+  facet_wrap(~sex) # split by sex
+
+## Based on normal distributions indicated above, a t-test is appropriate
+hares_f <- juvenile_weights %>% 
+  filter(sex == "f") %>% 
+  pull(weight) # make female vector
+
+hares_m <- juvenile_weights %>% 
+  filter(sex == "m") %>% 
+  pull(weight) # make male vector
+
+weight_ttest <- t.test(hares_f, hares_m) #ttest
+
+weight_effect <- cohen.d(na.omit(hares_f), na.omit(hares_m)) # effect size
+
+
+```
+
+The actual difference in means between juvenile snowshoe hares at the Bonanza Creek LTER is`r round(comparison_juveniles[1,2] - comparison_juveniles[2,2], digits = 4)`g. The p-value calculated using a `r weight_ttest$method` (p = `r round(weight_ttest$p.value, digits = 3)`) indicates a high liklihood that the two groups were drawn from samples with different means (ie there is a significant difference). However, with an estimated effect of `r round(weight_effect$estimate, digits = 3)` the effect size calculated using `r weight_effect$method` is `r weight_effect$magnitude`.
+
+
+### Juvenile Weight and Hind Foot Length
+
+```{r}
+ggplot(bonanza_juvenile, aes(weight, hindft)) + # plot weight and hindft
+  geom_point() + # scatterplot
+  theme_classic() +
+  labs(x = "Hind Foot Lenght (mm)",
+       y = "Weight (g)",
+       caption = "Figure 3. Relationship between weight (g) and hind foot lenght (mm) of juvenile snowshoe hares.") +
+  theme(plot.caption = element_text(hjust = 0, size = 11)) # move and size figure caption
+```
 
 
 # Summary
