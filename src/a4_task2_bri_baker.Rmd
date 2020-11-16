@@ -1,7 +1,7 @@
 ---
 title: "Bonanza Hares Exploratory Report"
 author: "Bri Baker"
-date: "November 12, 2020"
+date: "November 15, 2020"
 output: html_document
 ---
 
@@ -24,11 +24,12 @@ bonanza_juvenile <- bonanza_hares %>% # start with full dataset
 
 # Introduction
 
+  The following exploration provides initial analysis of juvenile snowshoe hares, *Lepus americanus*, trapped in capture-recapture studies at the Bonanza Creek LTER in Interior Alaska. This keystone prey species is integral to the functioning of northern boreal forests, the primary ecosystem in Bonanza Creek. Previously, this data set was utilized to investigate the declining population of snowshoe hares in the area (Kielland et al., 2017). The focus of this exploration is to discern general relationships between juvenile hare size (determined by weight and hind foot length) and sex throughout the recorded time frame. 
 
 
 # Data and Analysis
 
-  The data utilized in this exploration are snowshoe hare trap data from the Bonanza Creek LTER taken from 1998 to 2012 (Kielland et al., 2017). Following are basic analyses of the juvinile snowshoe hare population. These analyses inculde explorations of population through time, weight comparisons by sex, and weight and hind foot comparisons. Methods utilized include `r weight_ttest$method`, `r weight_effect$method`, and basic linear regression modeling in addition to basic graphical visualization.
+  The data utilized in this exploration are snowshoe hare trap data from the Bonanza Creek LTER taken from 1998 to 2012 (Kielland et al., 2017). Following are basic analyses of the juvenile snowshoe hare population. These analyses include explorations of population through time, weight comparisons by sex, and weight and hind foot comparisons. Methods utilized include Welch's two sample t-test, Cohen's d, and basic linear regression modeling in addition to basic graphical visualization.
   
 
 
@@ -65,7 +66,7 @@ juvenile_summary <- annual_juvenile %>% # start with juvenile
 ```
 
 
-  From 1998 to 2012, an average of `r juvenile_summary[1:1]` individuals were trapped annually with a maximum of `r juvenile_summary[1:4]` individuals and a minimum of `r juvenile_summary[1:5]` individuals which indicates that the measure of central tendancy does not accurately represent the data. In part this is because over time the number of individuals trapped annually decreased (Figure 1). However, it is also important to note that these measures utilized absoulte counts, so further analyses should standardize the counts by dividing by the total days of trapping in each year to ensure that the effort signal does not introduce variance that does not exist. 
+  From 1998 to 2012, an average of `r juvenile_summary[1:1]` individuals were trapped annually with a maximum of `r juvenile_summary[1:4]` individuals and a minimum of `r juvenile_summary[1:5]` individuals which indicates that the measure of central tendency does not accurately represent the data. In part this is because over time the number of individuals trapped annually decreased (Figure 1). However, it is also important to note that these measures utilized absolute counts, so further analyses should standardize the counts by dividing by the total days of trapping in each year to ensure that the effort signal does not introduce variance that does not exist. 
 
 
 
@@ -93,7 +94,7 @@ ggplot(juvenile_weights, aes(sex, weight)) + # plot juvenile weights
 ```
 
 
-  Hares trapped at the general site (bonbs) were larger on average than at the other two sites; however, there were more individuals and a larger spread trapped at the riparian site (bonrip). Across all trap sites, juvenile male showshoe hare are larger on average than female juveniles. This difference is most defined in the mature forest trap site (bonmat) and least defined in the general trap site (bonbs)(Figure 2). 
+  Hares trapped at the general site (bonbs) were larger on average than at the other two sites; however, there were more individuals and a larger spread trapped at the riparian site (bonrip). Across all trap sites, juvenile male snowshoe hare are larger on average than female juveniles. This difference is most defined in the mature forest trap site (bonmat) and least defined in the general trap site (bonbs) (Figure 2). 
 
 
 ### Juvenile Weight Comparison
@@ -139,7 +140,8 @@ weight_effect <- cohen.d(na.omit(hares_f), na.omit(hares_m)) # effect size
 
 ```
 
-  The actual difference in means between the weights of juvenile snowshoe hares at the Bonanza Creek LTER is `r abs(round(comparison_juveniles[1,2] - comparison_juveniles[2,2], digits = 4))`g (calculated from Table 1). The p-value calculated using a `r weight_ttest$method` (p = `r round(weight_ttest$p.value, digits = 3)`) indicates a high likelihood that the two groups were drawn from samples with different means (ie there is a significant difference). However, with an estimated effect of `r round(weight_effect$estimate, digits = 3)` the effect size calculated using `r weight_effect$method` is `r weight_effect$magnitude`.
+  The actual difference in means between the weights of juvenile snowshoe hares at the Bonanza Creek LTER is `r abs(round(comparison_juveniles[1,2] - comparison_juveniles[2,2], digits = 3))` g (calculated from Table 1). The p-value calculated using a `r weight_ttest$method` (p = `r round(weight_ttest$p.value, digits = 3)`) indicates a high likelihood that the two groups were drawn from samples with different means (i. e. there is a significant difference). However, with an estimated effect of `r round(weight_effect$estimate, digits = 3)`, the effect size calculated using `r weight_effect$method` is `r weight_effect$magnitude`.
+
 
 
 ### Juvenile Weight and Hind Foot Length
@@ -171,15 +173,21 @@ bonanza_lm_out <- broom::glance(lm_j_ft_weight) # stats glance
 
   Simple linear regression was used to explore the relationship between juvenile snowshoe hare foot hind foot length (mm) and body mass (g) across all three sampling sites, and including both male and female hares. A significant regression model was found ($\beta$ = `r round(bonanza_coef,3)`, F(`r bonanza_lm_out$df`,`r bonanza_lm_out$df.residual`) = `r round(bonanza_lm_out$statistic,1)`, p < 0.001) with an R^2^ of `r round(bonanza_lm_out$r.squared,3)`.
 
-ADD DISCUSSION OF LM
+  The low R^2^ indicates that this linear model may not be the best fit for the patterns in these data. The data do not fit all of the main assumptions for a linear regression. Firstly, although there is a positive relationship in the data and in the model, it is difficult to say if the data fit the linearity assumption. Additionally, they are heteroscedastic and therefore do not fit the homoscedasticity assumption. 
+
 
 
 # Summary
 
+* In recent years the number of juvenile snowshoe hares captured annually has decreased. 
+* Among juvenile hares, males tend to weigh more with average weights varying across trap sites. 
+* The difference in weight between males and females is statistically significant, but the effect size of the phenomenon is small.
+* There is a positive relationship between juvenile hare weight and hind foot length, but a linear model does not effectively explain the variance.
+
+
+
 # Citations
 
 
-Kielland, K., F.S. Chapin, R.W. Ruess, and Bonanza Creek LTER. 2017. Snowshoe hare physical data in Bonanza Creek Experimental Forest: 1999-Present ver 22. Environmental Data Initiative. https://doi.org/10.6073/pasta/03dce4856d79b91557d8e6ce2cbcdc14
-
-https://portal.edirepository.org/nis/metadataviewer?packageid=knb-lter-bnz.55.22
+Kielland, K., F.S. Chapin, R.W. Ruess, and Bonanza Creek LTER. 2017. *Snowshoe hare physical data in Bonanza Creek Experimental Forest: 1999-Present ver 22. Environmental Data Initiative.* https://doi.org/10.6073/pasta/03dce4856d79b91557d8e6ce2cbcdc14
 
