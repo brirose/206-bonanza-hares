@@ -45,7 +45,7 @@ annual_juvenile <- bonanza_juvenile %>% # start with juvenile hares
   rename(count = n) # rename counts column
 
 ggplot(annual_juvenile, aes(year_new, count)) + # make plot of year counts
-  geom_line() + # use line graph
+  geom_col() + # use column graph
   scale_x_continuous("Year", breaks = seq(1998, 2012, 1)) + # format x axis
   theme_light() + # format theme
   labs(caption = "Figure 1. Annual count of juvenile showshoe hares at Bonanza LTER. Includes absoulte count \n of individuals per year." , # title
